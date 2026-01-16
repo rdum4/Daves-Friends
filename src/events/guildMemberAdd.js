@@ -25,7 +25,7 @@ const getWelcomeMessage = (userId) => {
   */
   return {
     content: `Welcome ${userMention(userId)},
-    Hope you have great time here in the CSS 360 Demo Chatroom!
+    Wsg man, welcome.
   `,
   };
 };
