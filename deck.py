@@ -1,6 +1,7 @@
 from dataclasses import dataclass
+from enum import Enum
 
-class Color:
+class Color(Enum):
     RED = 0
     YELLOW = 1
     BLUE = 2
@@ -62,16 +63,17 @@ class Reverse:
 Card = Number | Wild | DrawFourWild | Reverse | Skip | DrawTwo
 
 def can_play_card(top: Card, playing: Card) -> bool:
-    if playing == Wild or playing == DrawFourWild:
+
+    if playing == top or type(top) == type(playing):
         return True
 
-    match top:
-        case Number(color, number):
-            return color == playing.color or number == playing.number
-        case Reverse(color) | Skip(color) | DrawTwo(color):
-            return color == playing.color
-        case Wild(color) | DrawFourWild(color):
-            return color == playing.color
+    match playing:
+        case Wild(_) | DrawFourWild(_):
+            return True
+        case Skip(c) | Reverse(c) | DrawTwo(c):
+            return c == top.color
+        case Number(c, n):
+            return c == top.color or n == top.n
             
     return False
     
