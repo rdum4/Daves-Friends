@@ -13,7 +13,11 @@ intents.message_content = True
 bot = commands.Bot(command_prefix='/', intents=intents)
 
 @bot.command()
-async def ping(ctx, arg = ""):
+async def ping(ctx: commands.Context[commands.Bot], arg: str = ""):
     await ctx.send(f"pong {arg}")
 
-bot.run(os.getenv('DISCORD_TOKEN'))
+token = os.getenv("DISCORD_TOKEN")
+if token is None:
+    raise RuntimeError("DISCORD_TOKEN is not set in .env")
+
+bot.run(token)
