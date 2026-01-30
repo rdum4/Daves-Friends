@@ -199,7 +199,6 @@ class GameState:
                     
                     card = self.state["deck"].pop()
                     self.state["hands"].append(card)
-                
 
     def _draw_first_valid_start_card(self, draw_pile: list[Card], discard_pile: list[Card]) -> Card:
         raise NotImplementedError
