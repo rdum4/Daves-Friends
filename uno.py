@@ -22,8 +22,10 @@ async def ping(interaction: discord.Interaction, text: str | None = None) -> Non
 @bot.event
 async def on_ready() -> None:
     # Load lobby commands from lobby.py (extension style: async def setup(bot))
-    if "lobby" not in bot.extensions:
-        await bot.load_extension("lobby")
+
+    ext = "controller.lobby_cog"
+    if ext not in bot.extensions:
+        await bot.load_extension(ext)
 
     # Fast sync: set GUILD_ID in .env to sync instantly in that server
     guild_id = os.getenv("GUILD_ID")
