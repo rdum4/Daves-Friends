@@ -1,9 +1,14 @@
-from dataclasses import dataclass, field
-from typing import Dict, Set, List
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Dict, List
 
 import discord
 from discord import app_commands
 from discord.ext import commands
+
+from models.game_state import GameState, GameError, Phase
 
 
 def mention(user_id: int) -> str:
@@ -20,8 +25,7 @@ def require_channel_id(interaction: discord.Interaction) -> int:
 @dataclass
 class Lobby:
     host_id: int
-    players: Set[int] = field(default_factory=set)
-    started: bool = False
+    game: GameState
 
 
 # One lobby per channel
@@ -44,11 +48,13 @@ class LobbyCog(commands.Cog):
             )
             return
 
-        lobbies[cid] = Lobby(host_id=uid, players={uid}, started=False)
+        g = GameState()
+        g.add_player(uid)
+        lobbies[cid] = Lobby(host_id=uid, game=g)
 
         lobby = lobbies[cid]
         await interaction.response.send_message(
-            f"Lobby created.\nHost: {mention(lobby.host_id)}\nPlayers: {len(lobby.players)}"
+            f"Lobby created.\nHost: {mention(lobby.host_id)}\nPlayers: {len(lobby.game.players())}"
         )
 
     @app_commands.command(name="join", description="Join the lobby in this channel.")
@@ -63,22 +69,29 @@ class LobbyCog(commands.Cog):
                 ephemeral=True,
             )
             return
-        if lobby.started:
+
+        if lobby.game.phase() != Phase.LOBBY:
             await interaction.response.send_message(
                 "Game already started. You can't join right now.",
                 ephemeral=True,
             )
             return
-        if uid in lobby.players:
+
+        if uid in lobby.game.players():
             await interaction.response.send_message(
                 "You're already in this lobby.",
                 ephemeral=True,
             )
             return
 
-        lobby.players.add(uid)
+        try:
+            lobby.game.add_player(uid)
+        except GameError as e:
+            await interaction.response.send_message(str(e), ephemeral=True)
+            return
+
         await interaction.response.send_message(
-            f"{mention(uid)} joined the lobby. Players: {len(lobby.players)}"
+            f"{mention(uid)} joined the lobby. Players: {len(lobby.game.players())}"
         )
 
     @app_commands.command(name="leave", description="Leave the lobby in this channel.")
@@ -94,7 +107,7 @@ class LobbyCog(commands.Cog):
             )
             return
 
-        if uid not in lobby.players:
+        if uid not in lobby.game.players():
             await interaction.response.send_message(
                 "You're not in this lobby.",
                 ephemeral=True,
@@ -107,9 +120,14 @@ class LobbyCog(commands.Cog):
             await interaction.response.send_message("Host left, so the lobby was ended.")
             return
 
-        lobby.players.remove(uid)
+        try:
+            lobby.game.remove_player(uid)
+        except GameError as e:
+            await interaction.response.send_message(str(e), ephemeral=True)
+            return
+
         await interaction.response.send_message(
-            f"{mention(uid)} left the lobby. Players: {len(lobby.players)}"
+            f"{mention(uid)} left the lobby. Players: {len(lobby.game.players())}"
         )
 
     @app_commands.command(name="status", description="Show lobby status for this channel.")
@@ -124,14 +142,16 @@ class LobbyCog(commands.Cog):
             )
             return
 
-        players_sorted: List[int] = sorted(lobby.players)
+        players_sorted: List[int] = sorted(lobby.game.players())
         players_str = ", ".join(mention(pid) for pid in players_sorted) or "(none)"
+
+        started = lobby.game.phase() != Phase.LOBBY
 
         await interaction.response.send_message(
             "Lobby status:\n"
             f"Host: {mention(lobby.host_id)}\n"
-            f"Players ({len(lobby.players)}): {players_str}\n"
-            f"Started: {lobby.started}"
+            f"Players ({len(players_sorted)}): {players_str}\n"
+            f"Started: {started}"
         )
 
     @app_commands.command(name="start", description="Start the lobby game (host only).")
@@ -152,20 +172,31 @@ class LobbyCog(commands.Cog):
                 ephemeral=True,
             )
             return
-        elif lobby.started:
+        elif lobby.game.phase() != Phase.LOBBY:
             await interaction.response.send_message(
                 "Lobby already started.",
                 ephemeral=True,
             )
             return
-        elif len(lobby.players) < 2:
+        elif len(lobby.game.players()) < 2:
             await interaction.response.send_message(
                 "Need at least 2 players to start.",
                 ephemeral=True,
             )
             return
         else:
-            lobby.started = True
+            try:
+                lobby.game.start_game()
+            except NotImplementedError:
+                await interaction.response.send_message(
+                    "Start logic isn't finished yet (dealing + first start card are teammate-owned).",
+                    ephemeral=True,
+                )
+                return
+            except GameError as e:
+                await interaction.response.send_message(str(e), ephemeral=True)
+                return
+
             await interaction.response.send_message("Lobby started.")
 
     @app_commands.command(name="end", description="End the lobby (host only).")
