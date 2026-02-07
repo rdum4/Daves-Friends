@@ -20,7 +20,8 @@ The data flow diagram shows how Discord users interact with our bot through slas
 ---
 ## Use Case Diagram (Khalid Abdullahi)
 The diagram shows how players interact with the UNO Discord Bot through lobby commands, gameplay commands, and game logic based on what we have now.
-![UNO Bot Use Case Diagram](Usecase.png)
+
+<img width="732" height="1148" alt="image" src="https://github.com/user-attachments/assets/ee8f1b3a-7927-4bb7-89be-6158053b463c" />
 
 ---
 ## <Diagram Type> (<Name>)
