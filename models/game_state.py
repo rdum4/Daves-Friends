@@ -11,12 +11,15 @@ class Phase(Enum):
     PLAYING = auto()
     FINISHED = auto()
 
+
 class Direction(Enum):
     COUNTER_CLOCKWISE = auto()
     CLOCKWISE = auto()
 
+
 class GameError(Exception):
     pass
+
 
 @dataclass
 class PlayResult:
@@ -38,6 +41,28 @@ class DrawResult:
     drawn: list[Card]
     next_player: int
 
+
+def _deal_starting_hands(
+        players: list[int],
+        draw_pile: list[Card],
+        cards_per_player: int = 7
+) -> dict[int, list[Card]]:
+    if len(players) < 2:
+        raise GameError("Need at least 2 players to deal hands.")
+    if cards_per_player <= 0:
+        raise GameError("cards_per_player must be >= 1.")
+
+    hands: dict[int, list[Card]] = {uid: [] for uid in players}
+
+    for _ in range(cards_per_player):
+        for uid in players:
+            if not draw_pile:
+                raise GameError("Deck ran out while dealing starting hands.")
+            hands[uid].append(draw_pile.pop())
+
+    return hands
+
+
 class GameState:
     def __init__(self) -> None:
         self._rng = random.Random()
@@ -45,12 +70,12 @@ class GameState:
 
     def _new_state(self) -> dict[str, Any]:
         return {
-            "phase": Phase.LOBBY, # stores enum
-            "players": [], # stores discord user ids
-            "hands": {}, # stores user id -> list with cards
-            "deck": [], # list with cards
+            "phase": Phase.LOBBY,  # stores enum
+            "players": [],  # stores discord user ids
+            "hands": {},  # stores user id -> list with cards
+            "deck": [],  # list with cards
             "discard": [],
-            "turn_index": 0, # index representing which users turn it is 
+            "turn_index": 0,  # index representing which users turn it is
             "direction": Direction.CLOCKWISE,
             "winner": None,
         }
@@ -61,7 +86,7 @@ class GameState:
     # Getters
     def phase(self) -> Phase:
         return self.state["phase"]
-    
+
     def players(self) -> list[int]:
         return list(self.state["players"])
 
@@ -69,7 +94,6 @@ class GameState:
         if not self.state["players"]:
             raise GameError("No players.")
         return self.state["players"][self.state["turn_index"]]
-
 
     def hand(self, user_id: int) -> list[Card]:
         return list(self.state["hands"].get(user_id, []))
@@ -96,7 +120,6 @@ class GameState:
         self.state["players"].remove(user_id)
         self.state["hands"].pop(user_id, None)
 
-
     def start_game(self) -> None:
         if self.phase() != Phase.LOBBY:
             raise GameError("Game already started.")
@@ -108,9 +131,10 @@ class GameState:
         draw_pile: list[Card] = list(deck.cards)
         self._rng.shuffle(draw_pile)
 
-        hands = self._deal_starting_hands(self.state["players"], draw_pile)
+        hands = _deal_starting_hands(self.state["players"], draw_pile)
         discard_pile: list[Card] = []
-        _ = self._draw_first_valid_start_card(draw_pile, discard_pile)
+        # _ = self._draw_first_valid_start_card(draw_pile, discard_pile)
+        discard_pile.append(Number(Color.RED, 0))
 
         self.state["hands"] = hands
         self.state["deck"] = draw_pile
@@ -120,13 +144,11 @@ class GameState:
         self.state["winner"] = None
         self.state["phase"] = Phase.PLAYING
 
-
     def play(self, user_id: int, card_index: int, choose_color: Color | None = None) -> PlayResult:
         if self.phase() != Phase.PLAYING:
             raise GameError("Game not started.")
         if user_id != self.current_player():
             raise GameError("Not your turn.")
-
 
         hand = self.state["hands"].get(user_id, [])
         if card_index < 0 or card_index >= len(hand):
@@ -142,7 +164,6 @@ class GameState:
             if choose_color is None:
                 raise GameError("You must choose a color for Wild/Draw4.")
             card.color = choose_color
-
 
         if not can_play_card(top, card):
             raise GameError("You can't play that card on the current top card.")
@@ -166,7 +187,6 @@ class GameState:
         res.next_player = self.current_player()
         return res
 
-
     def draw_and_pass(self, user_id: int, amt: int = 1) -> DrawResult:
         if self.phase() != Phase.PLAYING:
             raise GameError("Game is not currently playing.")
@@ -188,18 +208,20 @@ class GameState:
         self._advance_turn(steps=1)
         return DrawResult(user_id=user_id, drawn=drawn, next_player=self.current_player())
 
-    def _deal_starting_hands(self, players: list[int], draw_pile: list[Card]) -> dict[int, list[Card]]:
-        cards_per_player = 7
-        hands: dict[int, list[Card]] = {pid: [] for pid in players}
+    def deal_starting_hands(players: list[int], draw_pile: list[Card], cards_per_player: int = 7) -> dict[
+        int, list[Card]]:
+        if len(players) < 2:
+            raise ValueError("Need at least 2 players to deal hands.")
+        if cards_per_player <= 0:
+            raise ValueError("cards_per_player must be >= 1.")
+
+        hands: dict[int, list[Card]] = {uid: [] for uid in players}
 
         for _ in range(cards_per_player):
-            for pid in players:
+            for uid in players:
                 if not draw_pile:
-                    break
-                hands[pid].append(draw_pile.pop())
-
-            if not draw_pile:
-                break
+                    raise ValueError("Deck ran out while dealing starting hands.")
+                hands[uid].append(draw_pile.pop())
 
         return hands
 
@@ -280,7 +302,6 @@ class GameState:
         n = len(players)
         self.state["turn_index"] = (self.state["turn_index"] + steps * self._dir_sign()) % n
 
-
     def _peek_next_player_id(self) -> int:
         players: list[int] = self.state["players"]
         if not players:
@@ -322,3 +343,4 @@ class GameState:
 
     def _dir_sign(self) -> int:
         return 1 if self.state["direction"] == Direction.CLOCKWISE else -1
+
