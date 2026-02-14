@@ -107,3 +107,32 @@ What I added (if applicable):
 - Unit tests verifying turn advancement after drawing
 - Confirmed that all tests pass with the existing test suite
 ---
+
+### Rio Dumecquias – Cohesion and Coupling
+What I analyzed:
+- Files analyzed: `uno.py`, `controllers/lobby.py`, `deck.py`, `models/game_state.py`
+- Reviewed the Class Diagram to confirm relationships between GameState, Deck, Card subclasses, and controller logic
+- Focused on whether classes have a single responsibility (cohesion) and whether dependencies between components are minimal and properly layered (coupling).
+
+Issues Found:
+
+1. Issue: Lobby command module mixes multiple responsibilities
+   - Location: `controllers/lobby.py`
+   - Problem: This module handles command execution, lobby lifecycle management, shared state storage, and formatting logic in the same file. This reduces cohesion because one module performs several different roles instead of focusing on a single responsibility.
+   - Impact: Harder to maintain as features grow. Increases risk that a change in formatting or state handling affects command behaviour.
+   - Suggested Fix: Keep LobbyCog responsible only for handling commands and move lobby storage and lifecycle logic into a LobbyManager class.
+  
+2. Issue: Lobby lifecycle rules and storage are enforced across multiple command handlers instead of a single owner component.
+   - Location: `controllers/lobby.py`: Line #50. (lobbies: Dict[int, Lobby] = {}
+   - Problem: Lobby existence checks, permission rules, and phase checks, are implemented separately inside multiple commands. Each command directly accesses and modifies the shared global lobbies dictionary instead of keeping lifecycle responsibilities to a single manager.
+   - Impact: Increased risk of inconsistent rule enforcement if one command is updated but others are not. Also repeats validation logic across commands and increases maintenance effort and potential for bugs.
+   - Suggested Fix: Create a LobbyManager class that owns lobby storage and enforces all lifecycle rules into one place. Keep lobby.py focused only on handling Discord commands and calling the manager and remove direct access to global lobby state.
+
+3. Issue:
+   - Location: `models.game_state.py`
+   - Problem: GameState currently manages several responsibilities including player management, phase transitions, deck interactions, and turn order/direction. While this works for the current scope, combining multiple responsibilities into one class reduces cohesion and makes the class more complex as gameplay rules expand.
+   - Impact: Increases coupling to main part of system: changes to game rules or turn handling can affect several methods and components. Testing and maintenance will become difficult when adding features like new rules or penalties.
+   - Suggested Fix: Improve GameState by separating some responsibilities into small helper components while keeping GameState as the main coordinator: 
+   -    Create a TurnManager which handles the current player, direction, and advancing turns.
+   -    Create a RuleEngine which validates move checks and special-cards.
+---
