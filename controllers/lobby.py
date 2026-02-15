@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, List, Never
 from deck import Card, Number, Skip, Reverse, DrawTwo, Wild, DrawFourWild
 
 import discord
@@ -41,7 +41,6 @@ def format_card(card: Card | None) -> str:
     return str(card)
 
 
-
 # One lobby per channel
 lobbies: Dict[int, Lobby] = {}
 
@@ -57,53 +56,59 @@ class LobbyCog(commands.Cog):
         uid = interaction.user.id
 
         if cid in lobbies:
-            await interaction.response.send_message(
-                "A lobby already exists in this channel. Use /status.",
-                ephemeral=True,
-            )
+            embed = self.views.error_embed("Lobby Exists", "A lobby already exists in this channel. Join this lobby or skedaddle!")
+            await interaction.response.send_message(embeds=[embed], ephemeral=True)
             return
 
         g = GameState()
         g.add_player(uid)
+
         lobbies[cid] = Lobby(user=interaction.user, game=g)
-
-
         lobby = lobbies[cid]
 
+        view = discord.ui.View(timeout=None)
+
+        join_btn = discord.ui.Button(label="🌟 Join", style=discord.ButtonStyle.blurple)
+        leave_btn = discord.ui.Button(label="🚫 Leave", style=discord.ButtonStyle.gray)
+        start_btn = discord.ui.Button(label="🚀 Start Game", style=discord.ButtonStyle.success)
+        cancel_btn = discord.ui.Button(label="🚨 Disband Game", style=discord.ButtonStyle.danger)
+
+        join_btn.callback = self.join
+        start_btn.callback = self.start
+        leave_btn.callback = self.leave
+        cancel_btn.callback = self.disband
+        view.add_item(join_btn)
+        view.add_item(leave_btn)
+        view.add_item(start_btn)
+        view.add_item(cancel_btn)
+
         embed = self.views.lobby_embed(lobby)
-        # await interaction.response.send_message(embed)
-        await interaction.response.send_message(embeds=[embed])
-        # await interaction.response.send_message("")
+        await interaction.response.send_message(embeds=[embed], view=view)
 
-        # await interaction.response.send_message(
-        #     f"Lobby created.\nHost: {mention(lobby.user.id)}\nPlayers: {len(lobby.game.players())}"
-        # )
-
-    @app_commands.command(name="join", description="Join the lobby in this channel.")
+    # @app_commands.command(name="join", description="Join the lobby in this channel.")
     async def join(self, interaction: discord.Interaction) -> None:
         cid = require_channel_id(interaction)
         uid = interaction.user.id
 
         lobby = lobbies.get(cid)
         if lobby is None:
+            embed = self.views.error_embed("No Lobby", "There is no lobby in this channel. Run `/create` to make one.")
             await interaction.response.send_message(
-                "No lobby in this channel. Use /create first.",
+                embeds=[embed],
                 ephemeral=True,
             )
             return
 
         if lobby.game.phase() != Phase.LOBBY:
-            await interaction.response.send_message(
-                "Game already started. You can't join right now.",
-                ephemeral=True,
-            )
+            embed = self.views.error_embed("Game Started", "The game has already started :(\nYou can't join right now.")
+            await interaction.response.send_message(embeds=[embed], ephemeral=True)
+
             return
 
         if uid in lobby.game.players():
-            await interaction.response.send_message(
-                "You're already in this lobby.",
-                ephemeral=True,
-            )
+            embed = self.views.error_embed("Already In Lobby", "You're already in this lobby, you can't join again silly!")
+            await interaction.response.send_message(embeds=[embed], ephemeral=True)
+
             return
 
         try:
@@ -112,26 +117,22 @@ class LobbyCog(commands.Cog):
             await interaction.response.send_message(str(e), ephemeral=True)
             return
 
+        update_embed = self.views.update_embed("User Joined", f"{mention(uid)} joined the lobby.")
         await interaction.response.send_message(
-            f"{mention(uid)} joined the lobby. Players: {len(lobby.game.players())}"
+            embeds=[update_embed],
         )
 
-    @app_commands.command(name="leave", description="Leave the lobby in this channel.")
     async def leave(self, interaction: discord.Interaction) -> None:
         cid = require_channel_id(interaction)
         uid = interaction.user.id
 
         lobby = lobbies.get(cid)
-        if lobby is None:
-            await interaction.response.send_message(
-                "No lobby in this channel.",
-                ephemeral=True,
-            )
-            return
 
         if uid not in lobby.game.players():
+            embed = self.views.error_embed("Not in Lobby", "You're not in this lobby", True)
+
             await interaction.response.send_message(
-                "You're not in this lobby.",
+                embeds=[embed],
                 ephemeral=True,
             )
             return
@@ -139,18 +140,31 @@ class LobbyCog(commands.Cog):
         # If host leaves: end lobby (simple + avoids host-transfer edge cases)
         if uid == lobby.user.id:
             del lobbies[cid]
-            await interaction.response.send_message("Host left, so the lobby was ended.")
+            embed = self.views.error_embed("Host Left",
+                                           "The host left the game, so the lobby was disbanded and the game was ended.")
+            await interaction.response.send_message(embeds=[embed])
             return
 
         try:
             lobby.game.remove_player(uid)
         except GameError as e:
-            await interaction.response.send_message(str(e), ephemeral=True)
+            embed = self.views.error_embed(str(e))
+            await interaction.response.send_message(embeds=[embed])
             return
 
-        await interaction.response.send_message(
-            f"{mention(uid)} left the lobby. Players: {len(lobby.game.players())}"
-        )
+        leave_embed = self.views.update_embed(f"User Left", f"{mention(uid)} left the lobby.")
+        await interaction.response.send_message(embeds=[leave_embed])
+
+    async def disband(self, interaction: discord.Interaction) -> None:
+        cid = require_channel_id(interaction)
+        if interaction.user.id != lobbies.get(cid).user.id:
+            embed = self.views.error_embed("Must Be Host", "In order to disband a game, you must be the host.")
+            await interaction.response.send_message(embeds=[embed])
+            return
+
+        del lobbies[cid]
+        embed = self.views.error_embed("Game Disbanded", "The host disbanded the game, so the lobby was deleted.")
+        await interaction.response.send_message(embeds=[embed])
 
     @app_commands.command(name="status", description="Show lobby status for this channel.")
     async def status(self, interaction: discord.Interaction) -> None:
@@ -176,7 +190,6 @@ class LobbyCog(commands.Cog):
             f"Started: {started}"
         )
 
-    @app_commands.command(name="start", description="Start the lobby game (host only).")
     async def start(self, interaction: discord.Interaction) -> None:
         cid = require_channel_id(interaction)
         uid = interaction.user.id
@@ -201,10 +214,8 @@ class LobbyCog(commands.Cog):
             )
             return
         elif len(lobby.game.players()) < 2:
-            await interaction.response.send_message(
-                "Need at least 2 players to start.",
-                ephemeral=True,
-            )
+            embed = self.views.error_embed("Need at least 2 Players", "You can't start a game by yourself :(")
+            await interaction.response.send_message(embeds=[embed], ephemeral=True)
             return
         else:
             try:
