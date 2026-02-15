@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Dict, List
 from deck import Card, Number, Skip, Reverse, DrawTwo, Wild, DrawFourWild
 
@@ -9,6 +8,8 @@ from discord import app_commands
 from discord.ext import commands
 
 from models.game_state import GameState, GameError, Phase
+from models.lobby_model import Lobby
+from views.lobby_views import LobbyViews
 
 
 def mention(user_id: int) -> str:
@@ -40,11 +41,6 @@ def format_card(card: Card | None) -> str:
     return str(card)
 
 
-@dataclass
-class Lobby:
-    host_id: int
-    game: GameState
-
 
 # One lobby per channel
 lobbies: Dict[int, Lobby] = {}
@@ -53,6 +49,7 @@ lobbies: Dict[int, Lobby] = {}
 class LobbyCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.views = LobbyViews()
 
     @app_commands.command(name="create", description="Create a lobby in this channel.")
     async def create(self, interaction: discord.Interaction) -> None:
@@ -68,12 +65,19 @@ class LobbyCog(commands.Cog):
 
         g = GameState()
         g.add_player(uid)
-        lobbies[cid] = Lobby(host_id=uid, game=g)
+        lobbies[cid] = Lobby(user=interaction.user, game=g)
+
 
         lobby = lobbies[cid]
-        await interaction.response.send_message(
-            f"Lobby created.\nHost: {mention(lobby.host_id)}\nPlayers: {len(lobby.game.players())}"
-        )
+
+        embed = self.views.lobby_embed(lobby)
+        # await interaction.response.send_message(embed)
+        await interaction.response.send_message(embeds=[embed])
+        # await interaction.response.send_message("")
+
+        # await interaction.response.send_message(
+        #     f"Lobby created.\nHost: {mention(lobby.user.id)}\nPlayers: {len(lobby.game.players())}"
+        # )
 
     @app_commands.command(name="join", description="Join the lobby in this channel.")
     async def join(self, interaction: discord.Interaction) -> None:
@@ -133,7 +137,7 @@ class LobbyCog(commands.Cog):
             return
 
         # If host leaves: end lobby (simple + avoids host-transfer edge cases)
-        if uid == lobby.host_id:
+        if uid == lobby.user.id:
             del lobbies[cid]
             await interaction.response.send_message("Host left, so the lobby was ended.")
             return
@@ -167,7 +171,7 @@ class LobbyCog(commands.Cog):
 
         await interaction.response.send_message(
             "Lobby status:\n"
-            f"Host: {mention(lobby.host_id)}\n"
+            f"Host: {mention(lobby.user.id)}\n"
             f"Players ({len(players_sorted)}): {players_str}\n"
             f"Started: {started}"
         )
@@ -184,7 +188,7 @@ class LobbyCog(commands.Cog):
                 ephemeral=True,
             )
             return
-        elif uid != lobby.host_id:
+        elif uid != lobby.user.id:
             await interaction.response.send_message(
                 "Only the host can start the lobby.",
                 ephemeral=True,
@@ -293,7 +297,7 @@ class LobbyCog(commands.Cog):
             )
             return
 
-        if uid != lobby.host_id:
+        if uid != lobby.user.id:
             await interaction.response.send_message(
                 "Only the host can end the lobby.",
                 ephemeral=True,

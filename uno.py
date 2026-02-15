@@ -24,7 +24,7 @@ async def uno(interaction: discord.Interaction) -> None:
 
 @bot.event
 async def on_ready() -> None:
-    # Load lobby commands from lobby.py (extension style: async def setup(bot))
+    # Load lobby commands from lobby_views.py (extension style: async def setup(bot))
 
     ext = "controllers.lobby"
     if ext not in bot.extensions:
