@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Dict, List
 from deck import Card, Number, Skip, Reverse, DrawTwo, Wild, DrawFourWild
 
 import discord
@@ -8,6 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from models.game_state import GameState, GameError, Phase
+from repos.lobby_repo import LobbyRepository
 from services.lobby_service import LobbyService
 from views.lobby_views import LobbyViews
 
@@ -45,7 +45,8 @@ class LobbyCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.lobby_views = LobbyViews()
-        self.lobby_service = LobbyService()
+        self.lobby_repo = LobbyRepository()
+        self.lobby_service = LobbyService(self.lobby_repo)
 
     @app_commands.command(name="create", description="Create a lobby in this channel.")
     async def create(self, interaction: discord.Interaction) -> None:
@@ -128,6 +129,8 @@ class LobbyCog(commands.Cog):
                                               "The host disbanded the game, so the lobby was deleted.")
         await interaction.response.send_message(embeds=[embed])
 
+    async def start(selfself, interaction: discord.Interaction) -> None:
+        await interaction.response.send_message("this command is a work in progress")
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(LobbyCog(bot))

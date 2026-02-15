@@ -5,8 +5,8 @@ from models.lobby_model import Lobby
 
 
 class LobbyService:
-    def __init__(self):
-        self._lobby_repo = LobbyRepository()
+    def __init__(self, repo: LobbyRepository):
+        self._lobby_repo = repo
 
     def create_lobby(self, channel_id: int, user: User) -> Lobby:
         if self._lobby_repo.exists(channel_id):
@@ -33,14 +33,11 @@ class LobbyService:
         if user.id in game.players():
             raise GameError("You're already in this lobby, you can't join again silly!", private=True)
 
-        try:
-            game.add_player(user.id)
-        except GameError as e:
-            raise e
+        game.add_player(user.id)
 
         return lobby
 
-    def leave_lobby(self, channel_id: int, user: User) -> Lobby | GameError:
+    def leave_lobby(self, channel_id: int, user: User) -> Lobby:
         if not self._lobby_repo.exists(channel_id):
             raise GameError("There is no lobby in this channel. Run `/create` to make one.", private=True,
                             title="No Lobby in This Channel")
@@ -56,10 +53,7 @@ class LobbyService:
             raise GameError("The host left the game, so the lobby was disbanded and the game was ended.",
                             private=False, title="Host Left")
 
-        try:
-            game.remove_player(user.id)
-        except GameError as e:
-            raise e
+        game.remove_player(user.id)
 
         return lobby
 
