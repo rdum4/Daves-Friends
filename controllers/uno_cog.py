@@ -41,7 +41,7 @@ def format_card(card: Card | None) -> str:
     return str(card)
 
 
-class LobbyCog(commands.Cog):
+class UnoCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.lobby_views = LobbyViews()
@@ -133,4 +133,4 @@ class LobbyCog(commands.Cog):
         await interaction.response.send_message("this command is a work in progress")
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(LobbyCog(bot))
+    await bot.add_cog(UnoCog(bot))
