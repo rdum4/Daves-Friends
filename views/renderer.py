@@ -18,20 +18,22 @@ class Renderer:
         self.lobby_service = lobby_service
 
     async def render(self, lobby: Lobby) -> (list[discord.Embed], Interactions):
-        print("in here")
         if lobby.game.phase() == Phase.LOBBY:
             embed = self.lobby_views.lobby_embed(lobby)
-            views = LobbyUI(self.lobby_service, self.lobby_views)
+            views = LobbyUI(self, self.lobby_service, self.lobby_views)
 
-            print("bello")
             return [embed], views
         else:
             pass
             # embed = self.game_views
-        print("nerd")
 
     async def update_from_interaction(self, interaction: discord.Interaction, lobby: Lobby):
-        pass
+        embeds, view = await self.render(lobby)
+
+        if not interaction.response.is_done():
+            await interaction.response.edit_message(embeds=embeds, view=view)
+        else:
+            await interaction.message.edit(embeds=embeds, view=view)
 
     async def update_by_message_id(self, bot: discord.Client, channel_id: int, message_id: int, lobby: Lobby):
         pass

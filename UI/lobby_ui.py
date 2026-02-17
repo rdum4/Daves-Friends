@@ -1,15 +1,19 @@
+from __future__ import annotations
 import discord.ui
-
 from models.game_state import GameError
 from services.lobby_service import LobbyService
 from utils.utils import require_channel_id, mention
 from views.lobby_views import LobbyViews
 from .interactions import Interactions
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from views.renderer import Renderer
 
 class LobbyUI(Interactions):
-    def __init__(self, lobby_service: LobbyService, lobby_views: LobbyViews):
+    def __init__(self, renderer: Renderer, lobby_service: LobbyService, lobby_views: LobbyViews):
         super().__init__()
+        self._renderer = renderer
         self.lobby_service = lobby_service
         self.lobby_views = lobby_views
 
@@ -27,10 +31,8 @@ class LobbyUI(Interactions):
             )
             return
 
-        update_embed = await self.lobby_views.update_embed("User Joined", f"{mention(interaction.user.id)} joined the lobby.")
-        await interaction.response.send_message(
-            embeds=[update_embed],
-        )
+        lobby = self.lobby_service.get_lobby(cid)
+        await self._renderer.update_from_interaction(interaction, lobby)
 
     @discord.ui.button(label="🚫 Leave", style=discord.ButtonStyle.gray)
     async def leave(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
@@ -46,8 +48,8 @@ class LobbyUI(Interactions):
             )
             return
 
-        leave_embed = self.lobby_views.update_embed(f"User Left", f"{mention(interaction.user.id)} left the lobby.")
-        await interaction.response.send_message(embeds=[leave_embed])
+        lobby = self.lobby_service.get_lobby(cid)
+        await self._renderer.update_from_interaction(interaction, lobby)
 
     @discord.ui.button(label="🚀 Start Game", style=discord.ButtonStyle.success)
     async def start(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
@@ -67,3 +69,5 @@ class LobbyUI(Interactions):
         embed = self.lobby_views.update_embed("Game Disbanded",
                                               "The host disbanded the game, so the lobby was deleted.")
         await interaction.response.send_message(embeds=[embed])
+
+
