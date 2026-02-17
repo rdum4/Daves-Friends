@@ -17,7 +17,7 @@ class BaseViews:
         self._footer = "Uno Discord Bot • Class Project for UWB 360"
 
     def get_random_color(self) -> Colour:
-        return random.choice(self._pretty_colors)
+        return Colour(random.choice(self._pretty_colors))
 
     def get_random_gif(self) -> str:
         return random.choice(self._cool_gifs)

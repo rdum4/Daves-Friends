@@ -18,7 +18,10 @@ class Direction(Enum):
 
 
 class GameError(Exception):
-    pass
+    def __init__(self, msg: str, private: bool = False, title: str = ""):
+        super().__init__(msg)
+        self.private = private
+        self.title = title
 
 
 @dataclass
@@ -343,4 +346,3 @@ class GameState:
 
     def _dir_sign(self) -> int:
         return 1 if self.state["direction"] == Direction.CLOCKWISE else -1
-

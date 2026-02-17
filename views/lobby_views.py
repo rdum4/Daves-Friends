@@ -6,7 +6,7 @@ from views.base_views import BaseViews
 
 
 class LobbyViews(BaseViews):
-    def lobby_embed(self, lobby: Lobby):
+    def lobby_embed(self, lobby: Lobby) -> discord.Embed:
         return self._build_embed(title="New Uno Lobby Open By " + lobby.user.name,
                                  desc="A new uno lobby is being hosted by <@" + str(
                                      lobby.user.id) + ">. To join, click the `🌟 Join` button.",
