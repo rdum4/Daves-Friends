@@ -1,0 +1,15 @@
+NAME               VERSION  TYPE    
+aiohappyeyeballs   2.6.1    python  
+aiohttp            3.13.3   python  
+aiosignal          1.4.0    python  
+attrs              25.4.0   python  
+discord            2.3.2    python  
+discord-py         2.6.4    python  
+dotenv             0.9.9    python  
+frozenlist         1.8.0    python  
+idna               3.11     python  
+multidict          6.7.0    python  
+propcache          0.4.1    python  
+python-dotenv      1.2.1    python  
+typing-extensions  4.15.0   python  
+yarl               1.22.0   python
