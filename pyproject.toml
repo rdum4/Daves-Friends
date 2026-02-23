@@ -1,5 +1,5 @@
 [project]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 name = "uno-discord"
 dynamic = ["dependencies", "optional-dependencies"]
 dependencies = ["discord", "dotenv"]
