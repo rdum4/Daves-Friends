@@ -1,9 +1,15 @@
 [project]
 requires-python = ">=3.10"
-name = "uno-discord"
+name = "uno_discord"
 version = "1.0"
-dependencies = ["discord", "dotenv"]
+dependencies = ["discord", "dotenv", "pytest"]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "atheris",
+]
 
 [tool.setuptools]
-packages = ["controllers", "models", "UI", "utils", "repos", "services"]
+packages = ["controllers", "models", "UI", "utils", "repos", "services", "tests"]
 py-modules = ["__init__"]
