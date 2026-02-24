@@ -6,9 +6,9 @@ def test_smoke_imports():
     Smoke test: core modules should import without crashing.
     """
     modules = [
-        "deck",
+        "models.deck",
         "models.game_state",
-        "controllers.lobby",
+        "services.lobby_service",
     ]
 
     for m in modules:

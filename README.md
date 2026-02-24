@@ -63,7 +63,7 @@ source .venv/bin/activate
 
 ### 3) Install dependencies
 ```bash
-pip install -r requirements.txt
+pip install --editable .
 ```
 
 ### 4) Create your .env
@@ -77,3 +77,6 @@ For faster slash command updates during development, add this to your .env:
 GUILD_ID=your_server_id
 ```
 This syncs commands instantly to that server. If not set, commands sync globally and may take longer to appear.
+
+### 6) Testing
+To run all tests, run `pytest` in the virtual environment.

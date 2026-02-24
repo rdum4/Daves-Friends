@@ -12,16 +12,6 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix="/", intents=intents)
 
-
-@bot.tree.command(name="ping", description="Replies with pong.")
-async def ping(interaction: discord.Interaction, text: str | None = None) -> None:
-    msg = "pong" if not text else f"pong {text}"
-    await interaction.response.send_message(msg)
-
-@bot.tree.command(name="uno", description="Announce that a player has 1 card left.")
-async def uno(interaction: discord.Interaction) -> None:
-    await interaction.response.send_message(f"UNO! {interaction.user.mention} has 1 card left.")
-
 @bot.event
 async def on_ready() -> None:
     # Load lobby commands from lobby_views.py (extension style: async def setup(bot))
