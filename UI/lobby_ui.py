@@ -61,6 +61,9 @@ class LobbyUI(Interactions):
 
         try:
             lobby = self.lobby_service.get_lobby(cid)
+            if interaction.user.id != lobby.user.id:
+                raise GameError("You must be the host in order to start the game!", private=True,
+                            title="Must be host")
             self.lobby_service.start_lobby(cid)
         except GameError as e:
             embed = self.lobby_views.error_embed("Start" if e.title == "" else e.title, str(e), True)
