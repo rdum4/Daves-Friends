@@ -46,7 +46,7 @@ class Renderer:
             return [embed], views, [file] if file else []
 
         elif lobby.game.phase() == Phase.FINISHED:
-            embed = self.end_views.end_embed()
+            embed = self.end_views.end_embed(lobby)
             views = EndUI()
             return [embed], views, []
 
