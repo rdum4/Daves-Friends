@@ -197,11 +197,11 @@ class GameState:
 
     def draw_and_pass(self, user_id: int, amt: int = 1) -> DrawResult:
         if self.phase() != Phase.PLAYING:
-            raise GameError("Game is not currently playing.")
+            raise GameError("Game is not currently playing.", title="Game Not Started", private=True)
         if user_id != self.current_player():
-            raise GameError("Not your turn.")
+            raise GameError("It's not your turn to play.", title="Wrong Turn", private=True)
         if amt <= 0:
-            raise GameError("amt must be >= 1.")
+            raise GameError("Amt must be >= 1.", title="Invalid Amount", private=True)
 
         draw_pile: list[Card] = self.state["deck"]
         discard_pile: list[Card] = self.state["discard"]

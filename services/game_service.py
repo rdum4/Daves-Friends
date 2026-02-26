@@ -11,4 +11,5 @@ class GameService:
         lobby.game.play(user_id, card_index, color)
 
     def draw(self, channel_id: int, user_id: int):
-        pass
+        lobby = self.lobby_service.get_lobby(channel_id)
+        lobby.game.draw_and_pass(user_id)

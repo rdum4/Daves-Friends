@@ -20,6 +20,7 @@ class Renderer:
         self.game_views = game_views
         self.end_views = end_views
         self.lobby_service = lobby_service
+        self.game_service = game_service
 
     async def render(self, lobby: Lobby) -> tuple[list[discord.Embed], Interactions]:
         if lobby.game.phase() == Phase.LOBBY:
@@ -29,7 +30,7 @@ class Renderer:
             return [embed], views
         elif lobby.game.phase() == Phase.PLAYING:
             embed = self.game_views.game_embed(lobby)
-            views = GameUI(lobby)
+            views = GameUI(self, lobby, self.game_service)
 
             return [embed], views
         elif lobby.game.phase() == Phase.FINISHED:
