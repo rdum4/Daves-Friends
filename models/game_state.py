@@ -3,7 +3,18 @@ from typing import Any
 from enum import Enum, auto
 
 import random
-from models.deck import Card, Color, Deck, Wild, DrawFourWild, can_play_card, Skip, Reverse, DrawTwo, Number
+from models.deck import (
+    Card,
+    Color,
+    Deck,
+    Wild,
+    DrawFourWild,
+    can_play_card,
+    Skip,
+    Reverse,
+    DrawTwo,
+    Number,
+)
 
 
 class Phase(Enum):
@@ -46,9 +57,7 @@ class DrawResult:
 
 
 def _deal_starting_hands(
-        players: list[int],
-        draw_pile: list[Card],
-        cards_per_player: int = 7
+    players: list[int], draw_pile: list[Card], cards_per_player: int = 7
 ) -> dict[int, list[Card]]:
     if len(players) < 2:
         raise GameError("Need at least 2 players to deal hands.")
@@ -79,7 +88,7 @@ class GameState:
             "deck": [],  # list with cards
             "discard": [],
             "turn_index": 0,  # index representing which users turn it is
-            "turn_count": 0, # counter representing the current turn #
+            "turn_count": 0,  # counter representing the current turn #
             "direction": Direction.CLOCKWISE,
             "winner": None,
         }
@@ -105,7 +114,7 @@ class GameState:
     def top_card(self) -> Card | None:
         discard = self.state["discard"]
         return discard[-1] if discard else None
-    
+
     def turn_count(self) -> int:
         return self.state["turn_count"]
 
@@ -151,38 +160,61 @@ class GameState:
         self.state["winner"] = None
         self.state["phase"] = Phase.PLAYING
 
-    def play(self, user_id: int, card_index: int, choose_color: Color | None = None) -> PlayResult:
+    def play(
+        self, user_id: int, card_index: int, choose_color: Color | None = None
+    ) -> PlayResult:
         if self.phase() != Phase.PLAYING:
-            raise GameError("The game has not started yet!", title="Game Not Started", private=True)
+            raise GameError(
+                "The game has not started yet!", title="Game Not Started", private=True
+            )
         if user_id != self.current_player():
-            raise GameError("It is currently not your turn to play.", title="Wrong Turn", private=True)
+            raise GameError(
+                "It is currently not your turn to play.",
+                title="Wrong Turn",
+                private=True,
+            )
 
         hand = self.state["hands"].get(user_id, [])
         if card_index < 0 or card_index >= len(hand):
-            raise GameError("That is not a valid card index", title="Invalid Card Index", private=True)
+            raise GameError(
+                "That is not a valid card index",
+                title="Invalid Card Index",
+                private=True,
+            )
 
         top = self.top_card()
         if top is None:
-            raise GameError("There is no card on top!", title="No Top Card!", private=True)
+            raise GameError(
+                "There is no card on top!", title="No Top Card!", private=True
+            )
 
         card = hand[card_index]
 
         if isinstance(card, (Wild, DrawFourWild)):
             if choose_color is None:
-                raise GameError("You must choose a color for Wild/Draw4.", title="Picked Incorrectly", private=True)
+                raise GameError(
+                    "You must choose a color for Wild/Draw4.",
+                    title="Picked Incorrectly",
+                    private=True,
+                )
             card.color = choose_color
 
         if not can_play_card(top, card):
-            raise GameError("You can't play that card on the current top card.", title="Incorrect Card", private=True)
+            raise GameError(
+                "You can't play that card on the current top card.",
+                title="Incorrect Card",
+                private=True,
+            )
 
         played = hand.pop(card_index)
         self.state["discard"].append(played)
 
-
         res = PlayResult(
             played_by=user_id,
             played_card=played,
-            chosen_color=(choose_color if isinstance(played, (Wild, DrawFourWild)) else None),
+            chosen_color=(
+                choose_color if isinstance(played, (Wild, DrawFourWild)) else None
+            ),
         )
 
         if len(hand) == 0:
@@ -197,9 +229,13 @@ class GameState:
 
     def draw_and_pass(self, user_id: int, amt: int = 1) -> DrawResult:
         if self.phase() != Phase.PLAYING:
-            raise GameError("Game is not currently playing.", title="Game Not Started", private=True)
+            raise GameError(
+                "Game is not currently playing.", title="Game Not Started", private=True
+            )
         if user_id != self.current_player():
-            raise GameError("It's not your turn to play.", title="Wrong Turn", private=True)
+            raise GameError(
+                "It's not your turn to play.", title="Wrong Turn", private=True
+            )
         if amt <= 0:
             raise GameError("Amt must be >= 1.", title="Invalid Amount", private=True)
 
@@ -214,10 +250,13 @@ class GameState:
             drawn.append(c)
 
         self._advance_turn(steps=1)
-        return DrawResult(user_id=user_id, drawn=drawn, next_player=self.current_player())
+        return DrawResult(
+            user_id=user_id, drawn=drawn, next_player=self.current_player()
+        )
 
-    def deal_starting_hands(players: list[int], draw_pile: list[Card], cards_per_player: int = 7) -> dict[
-        int, list[Card]]:
+    def deal_starting_hands(
+        players: list[int], draw_pile: list[Card], cards_per_player: int = 7
+    ) -> dict[int, list[Card]]:
         if len(players) < 2:
             raise ValueError("Need at least 2 players to deal hands.")
         if cards_per_player <= 0:
@@ -233,7 +272,9 @@ class GameState:
 
         return hands
 
-    def _draw_first_valid_start_card(self, draw_pile: list[Card], discard_pile: list[Card]) -> Card:
+    def _draw_first_valid_start_card(
+        self, draw_pile: list[Card], discard_pile: list[Card]
+    ) -> Card:
         if not draw_pile:
             raise GameError("Deck is empty; can't pick a start card.")
 
@@ -308,7 +349,9 @@ class GameState:
         if not players:
             return
         n = len(players)
-        self.state["turn_index"] = (self.state["turn_index"] + steps * self._dir_sign()) % n
+        self.state["turn_index"] = (
+            self.state["turn_index"] + steps * self._dir_sign()
+        ) % n
         self.state["turn_count"] += 1
 
     def _peek_next_player_id(self) -> int:

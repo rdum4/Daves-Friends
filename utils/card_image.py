@@ -1,5 +1,6 @@
 from models.deck import Number, Skip, Reverse, DrawTwo, Wild, DrawFourWild
 
+
 def get_card_filename(card) -> str:
     if isinstance(card, Number):
         return f"{card.color.name.capitalize()}_{card.number}.jpg"

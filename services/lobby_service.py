@@ -11,8 +11,11 @@ class LobbyService:
 
     def create_lobby(self, channel_id: int, user: User) -> Lobby:
         if self._lobby_repo.exists(channel_id):
-            raise GameError("A lobby already exists in this channel. Join this lobby or skedaddle!", private=True,
-                            title="Lobby Exists")
+            raise GameError(
+                "A lobby already exists in this channel. Join this lobby or skedaddle!",
+                private=True,
+                title="Lobby Exists",
+            )
 
         self._lobby_repo.set(channel_id, user, GameState())
         self._lobby_repo.get(channel_id).game.add_player(user.id)
@@ -22,23 +25,32 @@ class LobbyService:
     def start_lobby(self, channel_id: int) -> Lobby:
         lobby = self._lobby_repo.get(channel_id)
         lobby.game.start_game()
-        
+
         return self._lobby_repo.get(channel_id)
 
     def join_lobby(self, channel_id: int, user: User) -> Lobby:
         if not self._lobby_repo.exists(channel_id):
-            raise GameError("There is no lobby in this channel. Run `/create` to make one.", private=True,
-                            title="No Lobby in This Channel")
+            raise GameError(
+                "There is no lobby in this channel. Run `/create` to make one.",
+                private=True,
+                title="No Lobby in This Channel",
+            )
 
         lobby = self._lobby_repo.get(channel_id)
         game = lobby.game
 
         if game.phase() != Phase.LOBBY:
-            raise GameError("The game has already started :(\nYou can't join right now.", private=True,
-                            title="Game Started")
+            raise GameError(
+                "The game has already started :(\nYou can't join right now.",
+                private=True,
+                title="Game Started",
+            )
 
         if user.id in game.players():
-            raise GameError("You're already in this lobby, you can't join again silly!", private=True)
+            raise GameError(
+                "You're already in this lobby, you can't join again silly!",
+                private=True,
+            )
 
         game.add_player(user.id)
 
@@ -46,8 +58,11 @@ class LobbyService:
 
     def leave_lobby(self, channel_id: int, user: User) -> Lobby:
         if not self._lobby_repo.exists(channel_id):
-            raise GameError("There is no lobby in this channel. Run `/create` to make one.", private=True,
-                            title="No Lobby in This Channel")
+            raise GameError(
+                "There is no lobby in this channel. Run `/create` to make one.",
+                private=True,
+                title="No Lobby in This Channel",
+            )
 
         lobby = self._lobby_repo.get(channel_id)
         game = lobby.game
@@ -57,8 +72,11 @@ class LobbyService:
 
         if user.id == lobby.user.id:
             self._lobby_repo.delete(channel_id)
-            raise GameError("The host left the game, so the lobby was disbanded and the game was ended.",
-                            private=False, title="Host Left")
+            raise GameError(
+                "The host left the game, so the lobby was disbanded and the game was ended.",
+                private=False,
+                title="Host Left",
+            )
 
         game.remove_player(user.id)
 
@@ -66,13 +84,18 @@ class LobbyService:
 
     def disband_lobby(self, channel_id: int, user: User) -> None:
         if not self._lobby_repo.exists(channel_id):
-            raise GameError("There is no lobby in this channel. Run `/create` to make one.", private=True,
-                            title="No Lobby in This Channel")
+            raise GameError(
+                "There is no lobby in this channel. Run `/create` to make one.",
+                private=True,
+                title="No Lobby in This Channel",
+            )
 
         lobby = self._lobby_repo.get(channel_id)
 
         if user.id != lobby.user.id:
-            raise GameError("In order to disband a game, you must be the host.", private=True)
+            raise GameError(
+                "In order to disband a game, you must be the host.", private=True
+            )
 
         self._lobby_repo.delete(channel_id)
 

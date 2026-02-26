@@ -15,7 +15,7 @@ class EndViews(BaseViews):
         embed = self._build_embed(
             title="🎉 GAME OVER 🎉",
             desc=f"Winner: {mention(winner_id)}",
-            color=self.get_random_color()
+            color=self.get_random_color(),
         )
 
         results_text = ""

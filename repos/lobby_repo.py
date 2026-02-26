@@ -3,6 +3,7 @@ import discord
 from models.game_state import GameState
 from models.lobby_model import Lobby
 
+
 class LobbyRepository:
     def __init__(self):
         self.lobbies: Dict[int, Lobby] = {}

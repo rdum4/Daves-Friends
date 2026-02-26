@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from random import shuffle
 
+
 class Color(Enum):
     RED = auto()
     YELLOW = auto()
@@ -90,6 +91,7 @@ NUMBER_EMOJIS = {
     8: "8️⃣",
     9: "9️⃣",
 }
+
 
 def can_play_card(top: Card, playing: Card) -> bool:
     if playing == top or (type(top) is type(playing) and type(playing) is not Number):

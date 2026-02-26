@@ -4,9 +4,17 @@ from utils.card_image import get_card_filename
 from views.base_views import BaseViews
 from models.lobby_model import Lobby
 from models.deck import (
-    NUMBER_EMOJIS, COLOR_EMOJIS,
-    Number, Skip, Reverse, DrawTwo, Wild, DrawFourWild, Card
+    NUMBER_EMOJIS,
+    COLOR_EMOJIS,
+    Number,
+    Skip,
+    Reverse,
+    DrawTwo,
+    Wild,
+    DrawFourWild,
+    Card,
 )
+
 
 def _card_display(card: Card) -> str:
     if isinstance(card, Number):
@@ -23,13 +31,14 @@ def _card_display(card: Card) -> str:
         return f"➕4🌈{COLOR_EMOJIS[card.color] if card.color else ''}"
     return str(card)
 
+
 class GameViews(BaseViews):
     def game_embed(self, lobby: Lobby) -> tuple[discord.Embed, discord.File | None]:
         embed = self._build_embed(
             title="Game by " + lobby.user.name,
             desc="A game of UNO is in progress!",
             color=self.get_random_color(),
-            gif=False
+            gif=False,
         )
 
         players_turn = ""
@@ -59,7 +68,7 @@ class GameViews(BaseViews):
                 embed.add_field(
                     name="Chosen Color",
                     value=f"{COLOR_EMOJIS[card.color]}  **{card.color.name.capitalize()}**",
-                    inline=False
+                    inline=False,
                 )
 
         return embed, file

@@ -1,6 +1,7 @@
 """
 Fuzzes some parts of the bot code using atheris.
 """
+
 #!/usr/bin/python3
 
 import atheris

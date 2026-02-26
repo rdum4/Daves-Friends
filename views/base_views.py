@@ -81,7 +81,7 @@ class BaseViews:
         random_gif: bool = False,
         author: discord.Interaction.user = None,
     ) -> discord.Embed:
-    
+
         embed = discord.Embed(
             title=title,
             description=desc,
