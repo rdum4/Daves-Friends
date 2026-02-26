@@ -2,7 +2,7 @@ from __future__ import annotations
 from UI.interactions import Interactions
 import discord
 
-from models.game_state import GameError
+from models.game_state import GameError, Phase
 from models.lobby_model import Lobby
 from services.game_service import GameService
 from typing import TYPE_CHECKING
@@ -25,9 +25,6 @@ class GameUI(Interactions):
 
     @discord.ui.button(label="👀 View Cards", style=discord.ButtonStyle.blurple)
     async def view_cards(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
-        from models.game_state import Phase
-        from models.deck import format_card
-
         user_id = interaction.user.id
         game = self.lobby.game
 
@@ -41,16 +38,7 @@ class GameUI(Interactions):
             await interaction.response.send_message("You are not in this game.", ephemeral=True)
             return
 
-        cards_display = []
-        for index, card in enumerate(hand):
-            cards_display.append(f"**{index}**  →  {format_card(card)}")
-
-        embed = discord.Embed(
-            title="Your Hand",
-            description="\n".join(cards_display),
-            color=discord.Color.blurple()
-        )
-
+        embed = self._renderer.hand_views.hand_embed(hand)
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @discord.ui.button(label="🃏 Draw Card and Pass", style=discord.ButtonStyle.gray)

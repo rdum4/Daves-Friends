@@ -8,17 +8,19 @@ from services.game_service import GameService
 from services.lobby_service import LobbyService
 from views.end_views import EndViews
 from views.game_views import GameViews
+from views.hand_views import HandViews
 from views.lobby_views import LobbyViews
 from UI.lobby_ui import LobbyUI
 from UI.interactions import Interactions
 
 class Renderer:
     # my python is rusty but im pretty sure all this is passed in as reference?
-    def __init__(self, lobby_views: LobbyViews, game_views: GameViews, end_views: EndViews, lobby_service: LobbyService,
+    def __init__(self, lobby_views: LobbyViews, game_views: GameViews, end_views: EndViews, hand_views: HandViews,  lobby_service: LobbyService,
                  game_service: GameService):
         self.lobby_views = lobby_views
         self.game_views = game_views
         self.end_views = end_views
+        self.hand_views = hand_views
         self.lobby_service = lobby_service
         self.game_service = game_service
 
