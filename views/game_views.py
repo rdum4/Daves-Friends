@@ -23,8 +23,15 @@ def _card_display(card: Card) -> str:
     return str(card)
 
 class GameViews(BaseViews):
-    def game_embed(self, lobby: Lobby) -> discord.Embed:
-        embed = self._build_embed(title="Game by " + lobby.user.name, desc="A game of UNO is in progress!", color=self.get_random_color(), gif=False)
+    def game_embed(self, lobby: Lobby) -> tuple[discord.Embed, discord.File | None]:
+        from utils.card_image import get_card_filename
+
+        embed = self._build_embed(
+            title="Game by " + lobby.user.name,
+            desc="A game of UNO is in progress!",
+            color=self.get_random_color(),
+            gif=False
+        )
 
         players_turn = ""
         current_player_id = lobby.game.current_player()
@@ -38,9 +45,22 @@ class GameViews(BaseViews):
             else:
                 players_turn += mention(player)
 
-
         embed.add_field(name="Current Turn", value=players_turn, inline=False)
-        card = lobby.game.top_card()
-        embed.add_field(name="Card On Top", value=_card_display(card) if card else "(none)", inline=False)
 
-        return embed
+        card = lobby.game.top_card()
+        file = None
+
+        if card:
+            filename = get_card_filename(card)
+            path = f"assets/cards/{filename}"
+            file = discord.File(path, filename=filename)
+            embed.set_image(url=f"attachment://{filename}")
+
+            if isinstance(card, (Wild, DrawFourWild)) and card.color:
+                embed.add_field(
+                    name="Chosen Color",
+                    value=f"{COLOR_EMOJIS[card.color]}  **{card.color.name.capitalize()}**",
+                    inline=False
+                )
+
+        return embed, file

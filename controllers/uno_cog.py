@@ -73,8 +73,8 @@ class UnoCog(commands.Cog):
 
             return
 
-        embeds, view = await self._renderer.render(lobby)
-        await interaction.response.send_message(embeds=embeds, view=view)
+        embeds, view, files = await self._renderer.render(lobby)
+        await interaction.response.send_message(embeds=embeds, view=view, files=files)
         msg = await interaction.original_response()
         lobby.main_message = msg.id
 
@@ -141,8 +141,8 @@ class UnoCog(commands.Cog):
                 if channel:
                     await channel.send(f" <@{player_id}> was AFK. They drew a card and was skipped.")
 
-                    embeds, view = await self._renderer.render(lobby)
-                    await channel.send(embeds=embeds, view=view)
+                    embeds, view, files = await self._renderer.render(lobby)
+                    await channel.send(embeds=embeds, view=view, files=files)
 
                     asyncio.create_task(self._run_afk_timer(
                         channel_id,
