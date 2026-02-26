@@ -40,18 +40,17 @@ class Renderer:
             views = LobbyUI(self, self.lobby_service, self.lobby_views)
             return [embed], views, []
 
-        elif lobby.game.phase() == Phase.PLAYING:
+        if lobby.game.phase() == Phase.PLAYING:
             embed, file = self.game_views.game_embed(lobby)
             views = GameUI(self, lobby, self.game_service)
             return [embed], views, [file] if file else []
 
-        elif lobby.game.phase() == Phase.FINISHED:
+        if lobby.game.phase() == Phase.FINISHED:
             embed = self.end_views.end_embed(lobby)
             views = EndUI()
             return [embed], views, []
 
-        else:
-            raise RuntimeError("Unknown phase")
+        raise RuntimeError("Unknown phase")
 
     async def update_from_interaction(
         self, interaction: discord.Interaction, lobby: Lobby
