@@ -162,7 +162,7 @@ class UnoCog(commands.Cog):
         except discord.Forbidden:
             pass
 
-        async def run_afk_timer(
+    async def run_afk_timer(
             self, channel_id: int, player_id: int, start_turn_count: int
         ):
             """
