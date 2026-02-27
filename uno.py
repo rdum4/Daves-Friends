@@ -1,3 +1,7 @@
+"""
+A Discord bot that lets you play Uno!
+"""
+
 import os
 
 import discord
@@ -15,6 +19,9 @@ bot = commands.Bot(command_prefix="/", intents=intents)
 
 @bot.event
 async def on_ready() -> None:
+    """
+    When Discord is ready for the game, we set it up.
+    """
     # Load lobby commands from lobby_views.py (extension style: async def setup(bot))
 
     ext = "controllers.uno_cog"
