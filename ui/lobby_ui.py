@@ -1,3 +1,7 @@
+"""
+Providers the user interface for the lobby.
+"""
+
 from __future__ import annotations
 from typing import TYPE_CHECKING
 import asyncio
@@ -6,6 +10,8 @@ import discord.ui
 from models.game_state import GameError
 from services.lobby_service import LobbyService
 from views.lobby_views import LobbyViews
+from utils.utils import require_channel_id
+
 from .interactions import Interactions
 
 if TYPE_CHECKING:
@@ -13,6 +19,10 @@ if TYPE_CHECKING:
 
 
 class LobbyUI(Interactions):
+    """
+    The user interface for the lobby, connecting the lobby views to Discord.
+    """
+
     def __init__(
         self, renderer: Renderer, lobby_service: LobbyService, lobby_views: LobbyViews
     ):
@@ -23,8 +33,12 @@ class LobbyUI(Interactions):
 
     @discord.ui.button(label="🌟 Join", style=discord.ButtonStyle.blurple)
     async def join(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+        self, interaction: discord.Interaction, _button: discord.ui.Button
     ) -> None:
+        """
+        The button for joining a lobby.
+        """
+
         cid = require_channel_id(interaction)
 
         try:
@@ -44,8 +58,12 @@ class LobbyUI(Interactions):
 
     @discord.ui.button(label="🚫 Leave", style=discord.ButtonStyle.gray)
     async def leave(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+        self, interaction: discord.Interaction, _button: discord.ui.Button
     ) -> None:
+        """
+        The button for leaving a lobby.
+        """
+
         cid = require_channel_id(interaction)
 
         try:
@@ -65,8 +83,12 @@ class LobbyUI(Interactions):
 
     @discord.ui.button(label="🚀 Start Game", style=discord.ButtonStyle.success)
     async def start(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+        self, interaction: discord.Interaction, _button: discord.ui.Button
     ) -> None:
+        """
+        The button for lobby creators to start the game.
+        """
+
         cid = require_channel_id(interaction)
 
         try:
@@ -108,15 +130,19 @@ class LobbyUI(Interactions):
         cog = interaction.client.get_cog("UnoCog")
         if cog:
             asyncio.create_task(
-                cog._run_afk_timer(
+                cog.run_afk_timer(
                     cid, lobby.game.current_player(), lobby.game.state["turn_count"]
                 )
             )
 
     @discord.ui.button(label="🚨 Disband Game", style=discord.ButtonStyle.danger)
     async def disband(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+        self, interaction: discord.Interaction, _button: discord.ui.Button
     ) -> None:
+        """
+        The button that disbands a lobby, preventing it from being started.
+        """
+
         cid = require_channel_id(interaction)
 
         try:

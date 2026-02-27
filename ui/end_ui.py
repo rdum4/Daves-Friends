@@ -1,6 +1,11 @@
+"""
+Provides the user interface for the end of game.
+"""
+
 from ui.interactions import Interactions
 
 
 class EndUI(Interactions):
-    def __init__(self):
-        super().__init__()
+    """
+    The end of game user interface. Simply runs the parent constructor.
+    """

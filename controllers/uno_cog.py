@@ -136,7 +136,7 @@ class UnoCog(commands.Cog):
 
         await user.send(embed=embed)
 
-    async def _run_afk_timer(
+    async def run_afk_timer(
         self, channel_id: int, player_id: int, start_turn_count: int
     ):
         await asyncio.sleep(60)

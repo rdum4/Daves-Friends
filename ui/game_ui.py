@@ -1,3 +1,7 @@
+"""
+Provides the user interface for a game.
+"""
+
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
@@ -14,6 +18,10 @@ if TYPE_CHECKING:
 
 
 class GameUI(Interactions):
+    """
+    The user interface for a game, connecting the game views to Discord.
+    """
+
     def __init__(self, renderer: Renderer, lobby: Lobby, game_service: GameService):
         super().__init__()
         self._renderer = renderer
@@ -22,14 +30,21 @@ class GameUI(Interactions):
 
     @discord.ui.button(label="1️⃣ Call Uno", style=discord.ButtonStyle.success)
     async def call_uno(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+        self, interaction: discord.Interaction, _button: discord.ui.Button
     ) -> None:
+        """
+        Calls Uno, declaring a player has only one card left in their hand.
+        """
+
         await interaction.response.send_message("this command is a work in progress")
 
     @discord.ui.button(label="👀 View Cards", style=discord.ButtonStyle.blurple)
     async def view_cards(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+        self, interaction: discord.Interaction, _button: discord.ui.Button
     ) -> None:
+        """
+        Sends the user their cards as an embed only visible to them if the game is active.
+        """
         user_id = interaction.user.id
         game = self.lobby.game
 
@@ -52,8 +67,13 @@ class GameUI(Interactions):
 
     @discord.ui.button(label="🃏 Draw Card and Pass", style=discord.ButtonStyle.gray)
     async def draw_card_and_pass(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+        self, interaction: discord.Interaction, _button: discord.ui.Button
     ) -> None:
+        """
+        Draws a card and passes a player's turn. Pressed if the player cannot play or does not wish
+        to play.
+        """
+
         try:
             self.game_service.draw(interaction.channel_id, interaction.user.id)
 
