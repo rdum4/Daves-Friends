@@ -37,6 +37,7 @@ class GameError(Exception):
 
 @dataclass
 class PlayResult:
+    # pylint: disable=too-many-instance-attributes
     played_by: int
     played_card: Card
     chosen_color: Color | None = None
@@ -253,24 +254,6 @@ class GameState:
         return DrawResult(
             user_id=user_id, drawn=drawn, next_player=self.current_player()
         )
-
-    def deal_starting_hands(
-        players: list[int], draw_pile: list[Card], cards_per_player: int = 7
-    ) -> dict[int, list[Card]]:
-        if len(players) < 2:
-            raise ValueError("Need at least 2 players to deal hands.")
-        if cards_per_player <= 0:
-            raise ValueError("cards_per_player must be >= 1.")
-
-        hands: dict[int, list[Card]] = {uid: [] for uid in players}
-
-        for _ in range(cards_per_player):
-            for uid in players:
-                if not draw_pile:
-                    raise ValueError("Deck ran out while dealing starting hands.")
-                hands[uid].append(draw_pile.pop())
-
-        return hands
 
     def _draw_first_valid_start_card(
         self, draw_pile: list[Card], discard_pile: list[Card]

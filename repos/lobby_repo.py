@@ -23,7 +23,7 @@ class LobbyRepository:
         return self.lobbies[lobby_id]
 
     def set(
-        self, lobby_id: int, user: discord.Interaction.user, game: GameState
+        self, lobby_id: int, user: discord.User, game: GameState
     ) -> None:
         """
         Stores a lobby by ID.
