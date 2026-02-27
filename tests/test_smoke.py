@@ -14,6 +14,7 @@ def test_smoke_imports():
     modules = [
         "controllers",
         "models",
+        "models.bot",
         "services",
         "repos",
         "ui",

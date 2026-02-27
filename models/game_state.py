@@ -22,7 +22,7 @@ from models.deck import (
     DrawTwo,
     Number,
 )
-
+from models import bot
 
 class Phase(Enum):
     LOBBY = auto()
@@ -92,6 +92,7 @@ class GameState:
         return {
             "phase": Phase.LOBBY,  # stores enum
             "players": [],  # stores discord user ids
+            "bots": [],  # the indices of the users which are bots
             "hands": {},  # stores user id -> list with cards
             "deck": [],  # list with cards
             "discard": [],
@@ -115,6 +116,9 @@ class GameState:
         if not self.state["players"]:
             raise GameError("No players.")
         return self.state["players"][self.state["turn_index"]]
+
+    def is_bot(self, user_id) -> bool:
+        return user_id < 0
 
     def hand(self, user_id: int) -> list[Card]:
         return list(self.state["hands"].get(user_id, []))
@@ -143,6 +147,14 @@ class GameState:
             raise GameError("Player not in lobby.")
         self.state["players"].remove(user_id)
         self.state["hands"].pop(user_id, None)
+
+    def add_bot(self) -> None:
+        # Choose a new negative user ID less than any existing bot
+        m = 0
+        for user_id in self.state["players"]:
+            m = min(m, user_id)
+
+        self.add_player(m - 1)
 
     def start_game(self) -> None:
         if self.phase() != Phase.LOBBY:
@@ -234,6 +246,21 @@ class GameState:
         self._apply_effects_and_advance(played, res)
         res.next_player = self.current_player()
         return res
+
+    def play_bot(self):
+        if not self.is_bot(self.current_player()):
+            raise GameError("Current player isn't a bot")
+
+        user_id = self.current_player()
+        top = self.top_card()
+
+        hand = self.state["hands"][user_id]
+        (index, color) = bot.play_card(bot.Strategy.RANDOM, hand, top)
+
+        if index is None:
+            self.draw_and_pass(user_id)
+        else:
+            self.play(user_id, index, color)
 
     def draw_and_pass(self, user_id: int, amt: int = 1) -> DrawResult:
         if self.phase() != Phase.PLAYING:

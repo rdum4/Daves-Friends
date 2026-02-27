@@ -25,6 +25,9 @@ class GameService:
         lobby = self.lobby_service.get_lobby(channel_id)
         lobby.game.play(user_id, card_index, color)
 
+        if lobby.game.is_bot(lobby.game.current_player()):
+            lobby.game.play.play_bot()
+
     def draw(self, channel_id: int, user_id: int):
         """
         Instructs the game to draw and pass for a channel
