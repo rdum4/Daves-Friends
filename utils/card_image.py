@@ -1,7 +1,14 @@
+"""
+Provides a function for getting the filename for a card.
+"""
+
 from models.deck import Number, Skip, Reverse, DrawTwo, Wild, DrawFourWild
 
 
 def get_card_filename(card) -> str:
+    """
+    Gets the filename for the image associated with a card for displaying to the user.
+    """
     if isinstance(card, Number):
         return f"{card.color.name.capitalize()}_{card.number}.jpg"
 
