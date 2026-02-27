@@ -1,4 +1,4 @@
-from UI.interactions import Interactions
+from ui.interactions import Interactions
 
 
 class EndUI(Interactions):

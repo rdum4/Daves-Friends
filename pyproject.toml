@@ -11,5 +11,5 @@ test = [
 ]
 
 [tool.setuptools]
-packages = ["controllers", "models", "UI", "utils", "repos", "services", "tests", "views"]
+packages = ["controllers", "models", "ui", "utils", "repos", "services", "tests", "views"]
 py-modules = ["__init__"]

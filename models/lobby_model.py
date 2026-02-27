@@ -1,6 +1,8 @@
 from dataclasses import dataclass
-from models.game_state import GameState
+
 from discord.interactions import User
+
+from models.game_state import GameState
 
 
 @dataclass
