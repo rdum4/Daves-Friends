@@ -86,3 +86,36 @@ class GameUI(Interactions):
             return
 
         await self._renderer.update_from_interaction(interaction, self.lobby)
+
+    @discord.ui.button(label="1️⃣ Call Uno", style=discord.ButtonStyle.success)
+    async def call_uno(
+        self, interaction: discord.Interaction, _button: discord.ui.Button
+    ) -> None:
+        await interaction.response.defer(ephemeral=True)
+        
+        try:
+            result = self.game_service.call_uno(interaction.channel_id, interaction.user.id)
+        except GameError as e:
+            embed = self._renderer.lobby_views.error_embed(
+                "Game Error" if e.title == "" else e.title, str(e)
+            )
+            await interaction.response.send_message(embeds=[embed], ephemeral=e.private)
+            return
+        
+        await self._renderer.update_from_interaction(interaction, self.lobby)
+
+        match result["result"]:
+            case "safe":
+                target = result["target"]
+                await interaction.followup.send(f"🟩 <@{target}> called **UNO!**", ephemeral=False)
+            case "too_early":
+                await interaction.followup.send("Too early! Grace period is still active.", ephemeral=True)
+            case "penalty":
+                target = result["target"]
+                caller = result["caller"]
+                await interaction.followup.send(
+                    f"🚨 <@{target}> got caught by <@{caller}> and draws **+2** cards!", ephemeral=False)
+            case "no_target":
+                await interaction.followup.send("No one is currently at UNO.", ephemeral=True)
+            case _:
+                await interaction.followup.send("Unhandled UNO result.", ephemeral=True)

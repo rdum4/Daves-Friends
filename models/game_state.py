@@ -24,6 +24,8 @@ from models.deck import (
 )
 from models import bot
 
+import time
+
 class Phase(Enum):
     LOBBY = auto()
     PLAYING = auto()
@@ -98,6 +100,8 @@ class GameState:
             "discard": [],
             "turn_index": 0,  # index representing which users turn it is
             "turn_count": 0,  # counter representing the current turn #
+            "uno_vulnerable": None, # user_id who has 1 card and can be caught
+            "uno_grace_until": 0.0, # tiemstamp when others may start catching
             "direction": Direction.CLOCKWISE,
             "winner": None,
         }
@@ -129,6 +133,15 @@ class GameState:
 
     def turn_count(self) -> int:
         return self.state["turn_count"]
+    
+    def uno_vulnerable(self) -> int | None:
+        return self.state["uno_vulnerable"]
+    
+    def uno_grace_active(self) -> bool:
+        return (
+            self.state["uno_vulnerable"] is not None
+            and self._now() < self.state["uno_grace_until"]
+        )
 
     # Actions
     def add_player(self, user_id: int) -> None:
@@ -228,6 +241,7 @@ class GameState:
 
         played = hand.pop(card_index)
         self.state["discard"].append(played)
+        self._start_uno_window_if_needed(user_id)
 
         res = PlayResult(
             played_by=user_id,
@@ -238,6 +252,7 @@ class GameState:
         )
 
         if len(hand) == 0:
+            self._clear_uno()
             self.state["phase"] = Phase.FINISHED
             self.state["winner"] = user_id
             res.winner = user_id
@@ -283,6 +298,9 @@ class GameState:
             c = self._draw_one(draw_pile, discard_pile)
             hand.append(c)
             drawn.append(c)
+
+        if self.state["uno_vulnerable"] == user_id:
+            self._clear_uno()
 
         self._advance_turn(steps=1)
         return DrawResult(
@@ -412,3 +430,41 @@ class GameState:
 
     def _dir_sign(self) -> int:
         return 1 if self.state["direction"] == Direction.CLOCKWISE else -1
+    
+    def _now(self) -> float:
+        return time.monotonic()
+
+    def _clear_uno(self) -> None:
+        self.state["uno_vulnerable"] = None
+        self.state["uno_grace_until"] = 0.0
+
+    # start/reset uno if player is at 1 card; otherwise clear
+    def _start_uno_window_if_needed(self, user_id: int) -> None:
+        hand = self.state["hands"].get(user_id, [])
+        if len(hand) == 1:
+            self.state["uno_vulnerable"] = user_id
+            self.state["uno_grace_until"] = self._now() + 2.0
+        else:
+            if self.state["uno_vulnerable"] == user_id:
+                self._clear_uno()
+    
+    def call_uno(self, caller_id: int) -> dict[str, Any]:
+        if self.phase() != Phase.PLAYING:
+            raise GameError("Game is not currently playing.", private=True)
+        
+        target = self.state["uno_vulnerable"]
+        if target is None:
+            return {"result": "no_target", "caller": caller_id}
+
+        # if vulnerable player calls uno (safe, clear window)
+        if caller_id == target:
+            self._clear_uno()
+            return {"result": "safe", "target": target, "caller": caller_id}
+        
+        # other players trying to catch vulnerable player
+        if self._now() < self.state["uno_grace_until"]:
+            return {"result": "too_early", "target": target, "caller": caller_id}
+        
+        self._draw_many_to(target, 2)
+        self._clear_uno()
+        return {"result": "penalty", "target": target, "caller": caller_id}
