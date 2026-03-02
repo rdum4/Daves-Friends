@@ -96,10 +96,11 @@ class UnoCog(commands.Cog):
         """
 
         cid = require_channel_id(interaction)
-        lobby = self.lobby_service.get_lobby(cid)
-        main_msg_id = lobby.main_message
 
         try:
+            lobby = self.lobby_service.get_lobby(cid)
+            main_msg_id = lobby.main_message
+
             if card_index is None and color is None:
                 raise GameError(
                     "You must specify either a card index or a color.",
