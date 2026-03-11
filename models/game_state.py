@@ -2,9 +2,6 @@
 Provides classes and functions related to the operation of a game.
 """
 
-# pylint: disable=missing-class-docstring
-# pylint: disable=missing-function-docstring
-
 import random
 import time
 from datetime import datetime, timedelta, timezone
@@ -29,17 +26,28 @@ from models import bot
 
 
 class Phase(Enum):
+    """
+    The current phase of the game. LOBBY is before the game starts and when players can join.
+    PLAYING is when the game is being played and players can play cards. FINISHED is when the game
+    has ended and a winner has been declared.
+    """
     LOBBY = auto()
     PLAYING = auto()
     FINISHED = auto()
 
 
 class Direction(Enum):
+    """
+    The current direction of turn progression.
+    """
     COUNTER_CLOCKWISE = auto()
     CLOCKWISE = auto()
 
 
 class GameError(Exception):
+    """
+    Describes an error that has occurred with the game.
+    """
     def __init__(self, msg: str, private: bool = False, title: str = ""):
         super().__init__(msg)
         self.private = private
@@ -48,6 +56,9 @@ class GameError(Exception):
 
 @dataclass
 class PlayResult:
+    """
+    The result of a played card, containing information about its effects on the game.
+    """
     # pylint: disable=too-many-instance-attributes
     played_by: int
     played_card: Card
@@ -63,6 +74,10 @@ class PlayResult:
 
 @dataclass
 class DrawResult:
+    """
+    The result of drawing cards, containing information about who drew the cards and whose turn is
+    next.
+    """
     user_id: int
     drawn: list[Card]
     next_player: int
@@ -88,6 +103,12 @@ def _deal_starting_hands(
 
 
 class GameState:
+    """
+    The main GameState that describes operation of the Uno game at a fundamental level. Stores
+    information about the current state of the game in a dictionary which can be accessed with
+    accessor functions. Provides functions for modifying game state and progressing the game.
+    """
+
     def __init__(self) -> None:
         self._rng = random.Random()
         self.state: dict[str, Any] = self._new_state()
@@ -110,40 +131,74 @@ class GameState:
         }
 
     def reset(self) -> None:
+        """
+        Resets the game, erasing all game state.
+        """
         self.state = self._new_state()
 
     # Getters
     def phase(self) -> Phase:
+        """
+        Returns the current phase of the game.
+        """
         return self.state["phase"]
 
     def players(self) -> list[int]:
+        """
+        Returns the user ids of the players in the game.
+        """
         return list(self.state["players"])
 
     def current_player(self) -> int:
+        """
+        Returns the user id of the player whose turn it is from the state.
+        Throws GameError if there are no players in the game.
+        """
         if not self.state["players"]:
             raise GameError("No players.")
         return self.state["players"][self.state["turn_index"]]
 
     def is_bot(self, user_id) -> bool:
+        """
+        Returns whether or not a player is a bot
+        """
         return user_id < 0
 
     def hand(self, user_id: int) -> list[Card]:
+        """
+        Returns a player's hand as a list of cards
+        """
         return list(self.state["hands"].get(user_id, []))
 
     def top_card(self) -> Card | None:
+        """
+        Returns the top card, which is played upon.
+        """
         discard = self.state["discard"]
         return discard[-1] if discard else None
 
     def turn_count(self) -> int:
+        """
+        Returns how many turns have passed.
+        """
         return self.state["turn_count"]
 
     def afk_deadline(self):
+        """
+        Returns the deadline for the current player to finish their turn as a UTC timestamp.
+        """
         return self.state.get("afk_deadline")
 
     def uno_vulnerable(self) -> int | None:
+        """
+        Returns the user id of the user with only one card left.
+        """
         return self.state["uno_vulnerable"]
 
     def uno_grace_active(self) -> bool:
+        """
+        Returns whether or not the grace period for catching someone for not calling Uno is active.
+        """
         return (
             self.state["uno_vulnerable"] is not None
             and self._now() < self.state["uno_grace_until"]
@@ -151,6 +206,9 @@ class GameState:
 
     # Actions
     def add_player(self, user_id: int) -> None:
+        """
+        Adds a new player by id to the game.
+        """
         if self.state["phase"] != Phase.LOBBY:
             raise GameError("Game state has already been started.")
         if user_id in self.state["players"]:
@@ -159,7 +217,10 @@ class GameState:
         self.state["hands"][user_id] = []
 
     def remove_player(self, user_id: int) -> None:
-
+        """
+        Removes a player by id from the game. Throws an error if the player is not in the lobby or
+        if the game has already started.
+        """
         if self.phase() != Phase.LOBBY:
             raise GameError("You can't leave after the game starts.")
         if user_id not in self.state["players"]:
@@ -168,6 +229,9 @@ class GameState:
         self.state["hands"].pop(user_id, None)
 
     def add_bot(self) -> None:
+        """
+        Adds a new bot to the game (with a negative user ID)
+        """
         # Choose a new negative user ID less than any existing bot
         m = 0
         for user_id in self.state["players"]:
@@ -176,6 +240,9 @@ class GameState:
         self.add_player(m - 1)
 
     def start_game(self) -> None:
+        """
+        Starts a new game, transitioning the phase from lobby to playing.
+        """
         if self.phase() != Phase.LOBBY:
             raise GameError("Game already started.", private=True)
         if len(self.state["players"]) < 2:
@@ -202,6 +269,10 @@ class GameState:
     def play(
         self, user_id: int, card_index: int, choose_color: Color | None = None
     ) -> PlayResult:
+        """
+        Plays a card for a player by user id, card index, and color (if the card is a wild).
+        If color is provided and the card is not a wild, it is silently ignored.
+        """
         if self.phase() != Phase.PLAYING:
             raise GameError(
                 "The game has not started yet!", title="Game Not Started", private=True
@@ -269,6 +340,9 @@ class GameState:
         return res
 
     def play_bot(self):
+        """
+        Chooses a card for the bot to play based on a bot strategy and plays it with `play`.
+        """
         if not self.is_bot(self.current_player()):
             raise GameError("Current player isn't a bot")
 
@@ -284,6 +358,9 @@ class GameState:
             self.play(user_id, index, color)
 
     def draw_and_pass(self, user_id: int, amt: int = 1) -> DrawResult:
+        """
+        Adds `amt` cards to a user's hand and skips their turn. The game must be active.
+        """
         if self.phase() != Phase.PLAYING:
             raise GameError(
                 "Game is not currently playing.", title="Game Not Started", private=True
@@ -466,6 +543,11 @@ class GameState:
                 self._clear_uno()
 
     def call_uno(self, caller_id: int) -> dict[str, Any]:
+        """
+        Calls Uno. If the caller is the current player, the player is now safe from being caught.
+        If the caller is another player and the grace period has passed, the vulnerable player is
+        caught.
+        """
         if self.phase() != Phase.PLAYING:
             raise GameError("Game is not currently playing.", private=True)
 
