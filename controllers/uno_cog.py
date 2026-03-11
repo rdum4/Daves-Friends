@@ -150,6 +150,7 @@ class UnoCog(commands.Cog):
         except (discord.Forbidden, discord.HTTPException):
             pass
 
+# pylint: disable=duplicate-code
     @app_commands.command(name="kick", description="Kick a player from the game.")
     async def kick(self, interaction: discord.Interaction, player: discord.Member):
         """Allows the host to remove a player from the current game."""
