@@ -65,12 +65,13 @@ class GameViews(BaseViews):
             if index > 0:
                 players_turn += "\n"
 
-            if player == current_player_id:
-                players_turn += mention(player) + " ⬅️ Current Turn"
-            else:
-                players_turn += mention(player)
+            card_count = len(lobby.game.hand(player))
+            players_turn += str(card_count) + " " + mention(player)
 
-        embed.add_field(name="Current Turn", value=players_turn, inline=False)
+            if player == current_player_id:
+                players_turn += " ⬅️ Current Turn"
+
+        embed.add_field(name="Players", value=players_turn, inline=False)
 
         afk_deadline_attr = getattr(lobby.game, "afk_deadline", None)
         afk_deadline = (
