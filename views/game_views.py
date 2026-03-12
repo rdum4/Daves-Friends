@@ -76,19 +76,18 @@ class GameViews(BaseViews):
         if hasattr(lobby, "last_move"):
             move = lobby.last_move
 
-            # draw move
             if isinstance(move, dict) and move.get("type") == "draw":
-                text = f"{mention(move['player'])} drew a card"
-
-            # play move
+                embed.add_field(
+                    name="Last Move",
+                    value=f"{mention(move['player'])} drew a card",
+                    inline=False,
+                )
             else:
-                text = f"{mention(move.played_by)} played {_card_display(move.played_card)}"
-
-            embed.add_field(
-                name="Last Move",
-                value=text,
-                inline=False,
-            )
+                embed.add_field(
+                    name="Last Move",
+                    value=f"{mention(move.played_by)} played {_card_display(move.played_card)}",
+                    inline=False,
+                )
 
         afk_deadline_attr = getattr(lobby.game, "afk_deadline", None)
         afk_deadline = (
