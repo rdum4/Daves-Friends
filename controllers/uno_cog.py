@@ -272,7 +272,7 @@ class UnoCog(commands.Cog):
         Skips a player's turn if they don't play in 60 seconds.
         Kicks them if they've been AFK 5 times.
         """
-        await asyncio.sleep(2)
+        await asyncio.sleep(60)
 
         try:
             lobby = self.lobby_service.get_lobby(channel_id)
