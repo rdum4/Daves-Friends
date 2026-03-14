@@ -426,6 +426,7 @@ class UnoCog(commands.Cog):
                 self.start_solo_lobby_timer(lobby)
             )
 
+
 async def setup(bot: commands.Bot) -> None:
     """
     Adds a new instance of UnoCog to the bot.
